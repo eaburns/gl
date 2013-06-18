@@ -53,6 +53,14 @@ func poll() {
 			keyEvent(&e, true)
 		case C.SDL_KEYUP:
 			keyEvent(&e, false)
+		case C.SDL_MOUSEBUTTONDOWN:
+			mouseButtonEvent(&e, true)
+		case C.SDL_MOUSEBUTTONUP:
+			mouseButtonEvent(&e, false)
+		case C.SDL_MOUSEMOTION:
+			mouseMoveEvent(&e)
+		case C.SDL_MOUSEWHEEL:
+			mouseWheelEvent(&e)
 		case C.SDL_WINDOWEVENT:
 			winEvent(&e)
 		}
@@ -91,6 +99,62 @@ func keyEvent(e *C.SDL_Event, down bool) {
 	win.events <- ui.KeyEvent{
 		Down: down,
 		Key:  key,
+	}
+}
+
+var mouseButtons = map[C.Uint8]ui.Button{
+	C.SDL_BUTTON_LEFT:   ui.ButtonLeft,
+	C.SDL_BUTTON_RIGHT:  ui.ButtonRight,
+	C.SDL_BUTTON_MIDDLE: ui.ButtonCenter,
+}
+
+func mouseButtonEvent(e *C.SDL_Event, down bool) {
+	m := (*C.SDL_MouseButtonEvent)(unsafe.Pointer(e))
+	win, ok := wins[uint32(m.windowID)]
+	if !ok {
+		return
+	}
+
+	b, ok := mouseButtons[m.button]
+	if !ok {
+		return
+	}
+
+	win.events <- ui.MouseEvent{
+		Type:   ui.MouseClick,
+		Button: b,
+		Down:   down,
+		X:      int(m.x),
+		Y:      int(m.y),
+	}
+}
+
+func mouseMoveEvent(e *C.SDL_Event) {
+	m := (*C.SDL_MouseMotionEvent)(unsafe.Pointer(e))
+	win, ok := wins[uint32(m.windowID)]
+	if !ok {
+		return
+	}
+	win.events <- ui.MouseEvent{
+		Type: ui.MouseMove,
+		X:    int(m.x),
+		Y:    int(m.y),
+	}
+}
+
+func mouseWheelEvent(e *C.SDL_Event) {
+	m := (*C.SDL_MouseWheelEvent)(unsafe.Pointer(e))
+	win, ok := wins[uint32(m.windowID)]
+	if !ok || m.y == 0 {
+		return
+	}
+	var x, y C.int
+	C.SDL_GetMouseState(&x, &y)
+	win.events <- ui.MouseEvent{
+		Type: ui.MouseWheel,
+		Down: m.y < 0,
+		X:    int(x),
+		Y:    int(y),
 	}
 }
 
