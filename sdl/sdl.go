@@ -83,7 +83,7 @@ func keyEvent(e *C.SDL_Event, down bool) {
 	}
 	s := k.keysym.sym
 	key, ok := keys[int(s)]
-	if (s >= 'a' && s <= 'z') || (s >= 'A' && s <= 'Z') {
+	if (s >= 'a' && s <= 'z') || (s >= 'A' && s <= 'Z') || (s >= '0' && s <= '9') {
 		key = ui.Key(s)
 	} else if !ok {
 		return

@@ -60,7 +60,7 @@ var keyNames = map[Key]string{
 
 // String returns the human-readable representation of the Key.
 func (k Key) String() string {
-	if (k >= 'a' && k <= 'z') || (k >= 'A' && k <= 'Z') {
+	if (k >= 'a' && k <= 'z') || (k >= 'A' && k <= 'Z') || (k >= '0' && k <= '9') {
 		return string([]rune{rune(k)})
 	}
 	if n, ok := keyNames[k]; ok {
