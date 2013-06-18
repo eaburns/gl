@@ -6,8 +6,7 @@ package sdl
 #cgo darwin CFLAGS: -I/Library/Frameworks/SDL2.framework/Headers
 #cgo darwin LDFLAGS: -framework SDL2
 
-#cgo linux CFLAGS: -I/usr/local/include/SDL2
-#cgo linux LDFLAGS: -L/usr/local/lib -lSDL2
+#cgo linux pkg-config: sdl2
 
 static Uint32 sdlEventType(SDL_Event *e){
 	return e->type;
