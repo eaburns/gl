@@ -8,9 +8,9 @@ import (
 	"image/color"
 	"time"
 
-	"gui/gl"
-	"gui/sdl"
-	"gui/ui"
+	"github.com/eaburns/gui/gl"
+	"github.com/eaburns/gui/sdl"
+	"github.com/eaburns/gui/ui"
 )
 
 const (

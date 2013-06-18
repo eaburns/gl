@@ -19,7 +19,7 @@ import (
 	"time"
 	"unsafe"
 
-	"gui/ui"
+	"github.com/eaburns/gui/ui"
 )
 
 // Wins is the map of all open windows.  It can only be accessed by the Init go routine.
