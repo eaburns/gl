@@ -25,9 +25,9 @@ import (
 // Wins is the map of all open windows.  It can only be accessed by the Init go routine.
 var wins = make(map[uint32]*window, 1)
 
-// Init initializes SDL.  It must be called from the main go routine, and it only
-// returns if there is an error.  Hz specifies the frequency (in milliseconds)
-// that SDL polls events.
+// Init initializes SDL and starts the event polling loop.  It must be called from
+// the main go routine, and it only returns if there is an error.  Hz specifies
+// the frequency (in milliseconds) that SDL polls events.
 func Init(hz int) error {
 	if C.SDL_Init(C.SDL_INIT_EVERYTHING) != 0 {
 		return sdlError()
