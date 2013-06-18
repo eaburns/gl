@@ -127,6 +127,7 @@ func winEvent(e *C.SDL_Event) {
 
 type window struct {
 	win    *C.SDL_Window
+	rend   *C.SDL_Renderer
 	w, h   int
 	events chan interface{}
 }
@@ -149,12 +150,25 @@ func NewWindow(title string, w, h int) (ui.Win, error) {
 			win = nil
 			return
 		}
+		win.rend = C.SDL_CreateRenderer(win.win, -1, C.SDL_RENDERER_ACCELERATED)
+		if win.rend == nil {
+			err = sdlError()
+			C.SDL_DestroyWindow(win.win)
+			win = nil
+			return
+		}
 
 		win.events = make(chan interface{}, 10)
 		wins[uint32(C.SDL_GetWindowID(win.win))] = win
 	})
 
 	return win, err
+}
+
+func (win *window) Present() {
+	ui.Do(func() {
+		C.SDL_RenderPresent(win.rend)
+	})
 }
 
 // Events returns the window's event channel.

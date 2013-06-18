@@ -6,6 +6,10 @@ import (
 
 // A Win is an open window.
 type Win interface {
+	// Present swaps the front and back buffers, displaying that which
+	// was drawn since the last call to Present.
+	Present()
+
 	// Events returns a channel of the window's events.
 	Events() <-chan interface{}
 
