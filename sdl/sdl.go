@@ -79,6 +79,14 @@ var keys = map[int]ui.Key{
 	C.SDLK_DELETE:    ui.KeyDelete,
 }
 
+func mapKeySym(kcode C.SDL_Keycode) (ui.Key, bool) {
+	if (kcode >= 'a' && kcode <= 'z') || (kcode >= 'A' && kcode <= 'Z') || (kcode >= '0' && kcode <= '9') {
+		return ui.Key(kcode), true
+	}
+	key, ok := keys[int(kcode)]
+	return ui.Key(key), ok
+}
+
 func keyEvent(e *C.SDL_Event, down bool) {
 	k := (*C.SDL_KeyboardEvent)(unsafe.Pointer(e))
 	if k.repeat != 0 {
@@ -89,11 +97,8 @@ func keyEvent(e *C.SDL_Event, down bool) {
 		return
 	}
 
-	s := k.keysym.sym
-	key, ok := keys[int(s)]
-	if (s >= 'a' && s <= 'z') || (s >= 'A' && s <= 'Z') || (s >= '0' && s <= '9') {
-		key = ui.Key(s)
-	} else if !ok {
+	key, ok := mapKeySym(k.keysym.sym)
+	if !ok {
 		return
 	}
 
