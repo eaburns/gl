@@ -41,8 +41,8 @@ func mainFunc() {
 			if !ok {
 				os.Exit(0)
 			}
-			fmt.Println(ev)
-			if wEv, ok := ev.(ui.WinEvent); ok && wEv.Type == ui.WinClose {
+			fmt.Printf("%T%v\n", ev, ev)
+			if _, ok := ev.(ui.WinClose); ok {
 				win.Close()
 			}
 		case <-tick.C:

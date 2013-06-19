@@ -69,41 +69,6 @@ func (k Key) String() string {
 	return "Key(" + strconv.Itoa(int(k)) + ")"
 }
 
-// A KeyEvent signals a change in the state of a key on the keyboard.
-type KeyEvent struct {
-	// Down is true if they key is was pressed down, otherwise it is false.
-	Down bool
-
-	// Key is the key that was either pressed or depressed.
-	Key Key
-}
-
-// A MouseEventType is the type of mouse event.
-type MouseEventType int
-
-const (
-	// MouseClick is the event type when a mouse button is pressed or released.
-	MouseClick = iota
-	// MouseMove is the event type when the mouse is moved.
-	MouseMove
-	// MouseWheel is the event type when the mouse wheel is rolled.
-	MouseWheel
-)
-
-var mouseEventTypeNames = map[MouseEventType]string{
-	MouseClick: "MouseClick",
-	MouseMove:  "MouseMove",
-	MouseWheel: "MouseWheel",
-}
-
-// String returns the human-readable representation of a MouseEventType.
-func (m MouseEventType) String() string {
-	if n, ok := mouseEventTypeNames[m]; ok {
-		return n
-	}
-	return "MouseEventType(" + strconv.Itoa(int(m)) + ")"
-}
-
 // A Button identifies a button on a mouse.
 type Button int
 
@@ -130,72 +95,41 @@ func (m Button) String() string {
 	return "Button(" + strconv.Itoa(int(m)) + ")"
 }
 
-// A MouseEvent signals a change in the state of the mouse.
-type MouseEvent struct {
-	// Type is the type of the mouse event.
-	Type MouseEventType
+// KeyDown is an event signaling that a key on the keyboard was pressed.
+type KeyDown struct {
+	Key Key
+}
 
-	// The button that was pressed or depressed.
-	// This field is used if the Type is MouseClick.
+// KeyUp is an event signaling that a key on the keyboard was released.
+type KeyUp struct {
+	Key Key
+}
+
+// MouseDown is an event signaling that a mouse button was pressed.
+type MouseDown struct {
 	Button Button
-
-	// Down has multiple meanings depending on the event Type.
-	//
-	// If the Type is a MouseClick then Down is true if a button was
-	// pressed and false if the button was released.
-	//
-	// If the Type is a MouseWheel then Down is true if the wheel
-	// was rolled down, and false if it was rolled up.
-	//
-	// Otherwise Down is meaningless.
-	Down bool
-
 	// X and Y give the location of the pointer in the window.
 	// 0, 0 is the upper left corner of the window, and
 	// positive Y is downward.
 	X, Y int
 }
 
-// A WinEventType identifies the type of event that happened on a window.
-type WinEventType int
-
-const (
-	// WinClose is the WinEvent type when the "x" is clicked to close the window.
-	WinClose WinEventType = iota
-	// WinResize is the WinEvent type when the window size changes.
-	WinResize
-	// WinEnter is the WinEvent type when the window has gained mouse focus.
-	WinEnter
-	// WinLeave is the WinEvent type when the window has lost mouse focus.
-	WinLeave
-	// WinFocus is the WinEvent type when the window has gained keyboard focus.
-	WinFocus
-	// WinUnFocus is the WinEvent type when the window has lost keyboard focus.
-	WinUnFocus
-)
-
-var winEventTypeNames = map[WinEventType]string{
-	WinClose:   "WinClose",
-	WinResize:  "WinResize",
-	WinEnter:   "WinEnter",
-	WinLeave:   "WinLeave",
-	WinFocus:   "WinFocus",
-	WinUnFocus: "WinUnFocus",
+// MouseUp is an event signaling that a mouse button was released.
+type MouseUp struct {
+	Button Button
+	// X and Y give the location of the pointer in the window.
+	// 0, 0 is the upper left corner of the window, and
+	// positive Y is downward.
+	X, Y int
 }
 
-// String returns a human-readable representation of a WinEventType.
-func (t WinEventType) String() string {
-	if s, ok := winEventTypeNames[t]; ok {
-		return s
-	}
-	return "WinEventType(" + strconv.Itoa(int(t)) + ")"
+// MouseMove is an event signaling that the mouse has moved.
+type MouseMove struct {
+	// X and Y give the location of the pointer in the window.
+	// 0, 0 is the upper left corner of the window, and
+	// positive Y is downward.
+	X, Y int
 }
 
-// A WinEvent signals a change to a window.
-type WinEvent struct {
-	// Type is the type of event.
-	Type WinEventType
-
-	// Width and Height give the size of the window.
-	Width, Height int
-}
+// WinClose is an event signaling that the "x" was clicked to close a window.
+type WinClose struct{}

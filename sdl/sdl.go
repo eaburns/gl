@@ -60,8 +60,6 @@ func poll() {
 			mouseButtonEvent(&e, false)
 		case C.SDL_MOUSEMOTION:
 			mouseMoveEvent(&e)
-		case C.SDL_MOUSEWHEEL:
-			mouseWheelEvent(&e)
 		case C.SDL_WINDOWEVENT:
 			winEvent(&e)
 		}
@@ -90,6 +88,7 @@ func keyEvent(e *C.SDL_Event, down bool) {
 	if !ok {
 		return
 	}
+
 	s := k.keysym.sym
 	key, ok := keys[int(s)]
 	if (s >= 'a' && s <= 'z') || (s >= 'A' && s <= 'Z') || (s >= '0' && s <= '9') {
@@ -97,9 +96,11 @@ func keyEvent(e *C.SDL_Event, down bool) {
 	} else if !ok {
 		return
 	}
-	win.events <- ui.KeyEvent{
-		Down: down,
-		Key:  key,
+
+	if down {
+		win.events <- ui.KeyDown{Key: key}
+	} else {
+		win.events <- ui.KeyUp{Key: key}
 	}
 }
 
@@ -121,12 +122,11 @@ func mouseButtonEvent(e *C.SDL_Event, down bool) {
 		return
 	}
 
-	win.events <- ui.MouseEvent{
-		Type:   ui.MouseClick,
-		Button: b,
-		Down:   down,
-		X:      int(m.x),
-		Y:      int(m.y),
+	x, y := int(m.x), int(m.y)
+	if down {
+		win.events <- ui.MouseDown{Button: b, X: x, Y: y}
+	} else {
+		win.events <- ui.MouseUp{Button: b, X: x, Y: y}
 	}
 }
 
@@ -136,58 +136,16 @@ func mouseMoveEvent(e *C.SDL_Event) {
 	if !ok {
 		return
 	}
-	win.events <- ui.MouseEvent{
-		Type: ui.MouseMove,
-		X:    int(m.x),
-		Y:    int(m.y),
-	}
-}
-
-func mouseWheelEvent(e *C.SDL_Event) {
-	m := (*C.SDL_MouseWheelEvent)(unsafe.Pointer(e))
-	win, ok := wins[uint32(m.windowID)]
-	if !ok || m.y == 0 {
-		return
-	}
-	var x, y C.int
-	C.SDL_GetMouseState(&x, &y)
-	win.events <- ui.MouseEvent{
-		Type: ui.MouseWheel,
-		Down: m.y < 0,
-		X:    int(x),
-		Y:    int(y),
-	}
-}
-
-var winEvents = map[int]ui.WinEventType{
-	C.SDL_WINDOWEVENT_CLOSE:        ui.WinClose,
-	C.SDL_WINDOWEVENT_RESIZED:      ui.WinResize,
-	C.SDL_WINDOWEVENT_SIZE_CHANGED: ui.WinResize,
-	C.SDL_WINDOWEVENT_ENTER:        ui.WinEnter,
-	C.SDL_WINDOWEVENT_LEAVE:        ui.WinLeave,
-	C.SDL_WINDOWEVENT_FOCUS_GAINED: ui.WinFocus,
-	C.SDL_WINDOWEVENT_FOCUS_LOST:   ui.WinUnFocus,
+	win.events <- ui.MouseMove{X: int(m.x), Y: int(m.y)}
 }
 
 func winEvent(e *C.SDL_Event) {
 	w := (*C.SDL_WindowEvent)(unsafe.Pointer(e))
 	win, ok := wins[uint32(w.windowID)]
-	if !ok {
+	if !ok || w.event != C.SDL_WINDOWEVENT_CLOSE {
 		return
 	}
-
-	if w.event == C.SDL_WINDOWEVENT_RESIZED || w.event == C.SDL_WINDOWEVENT_SIZE_CHANGED {
-		win.w = int(w.data1)
-		win.h = int(w.data2)
-	}
-
-	if t, ok := winEvents[int(w.event)]; ok {
-		win.events <- ui.WinEvent{
-			Type:   t,
-			Width:  win.w,
-			Height: win.h,
-		}
-	}
+	win.events <- ui.WinClose{}
 }
 
 type window struct {
