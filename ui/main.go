@@ -3,7 +3,6 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"image/color"
 	"os"
@@ -66,9 +65,7 @@ func draw() error {
 		gl.Vertex2(200, 200)
 		gl.Vertex2(100, 200)
 		gl.End()
-		if s, ok := gl.ErrorString[gl.GetError()]; ok && s != "GL_NO_ERROR" {
-			err = errors.New(s)
-		}
+		err = gl.Error()
 	})
 	return err
 }

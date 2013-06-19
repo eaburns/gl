@@ -11,6 +11,7 @@ package gl
 import "C"
 
 import (
+	"errors"
 	"image/color"
 )
 
@@ -56,7 +57,7 @@ func ClearColorBuffer() {
 	C.glClear(C.GL_COLOR_BUFFER_BIT)
 }
 
-var ErrorString = map[int]string{
+var errorStrings = map[C.GLenum]string{
 	C.GL_NO_ERROR:                      "GL_NO_ERROR",
 	C.GL_INVALID_ENUM:                  "GL_INVALID_ENUM",
 	C.GL_INVALID_VALUE:                 "GL_INVALID_VALUE",
@@ -67,6 +68,11 @@ var ErrorString = map[int]string{
 	C.GL_STACK_OVERFLOW:                "GL_STACK_OVERFLOW",
 }
 
-func GetError() int {
-	return int(C.glGetError())
+// Error returns an error from OpenGL, or nil if there was no error.
+func Error() error {
+	e := C.glGetError()
+	if e == C.GL_NO_ERROR {
+		return nil
+	}
+	return errors.New(errorStrings[e])
 }
