@@ -1,10 +1,5 @@
+gl/deprecated.go:17:1: exported function BeginQuads should have comment
+gl/deprecated.go:21:1: exported function End should have comment
+gl/deprecated.go:25:1: exported function Vertex2 should have comment
+gl/deprecated.go:29:1: exported function Color should have comment
 gl/gl.go:1:1: package comment should be of the form "Package gl ..."
-gl/gl.go:17:1: exported function Init should have comment
-gl/gl.go:25:1: exported function BeginQuads should have comment
-gl/gl.go:29:1: exported function End should have comment
-gl/gl.go:33:1: exported function Vertex2 should have comment
-gl/gl.go:37:1: exported function Color should have comment
-gl/gl.go:46:1: exported function ClearColor should have comment
-gl/gl.go:55:1: exported function ClearColorBuffer should have comment
-gl/gl.go:59:5: exported var ErrorString should have comment
-gl/gl.go:70:1: exported function GetError should have comment
