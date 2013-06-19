@@ -6,10 +6,12 @@ import (
 	"errors"
 	"fmt"
 	"image/color"
+	"os"
 	"time"
 
 	"github.com/eaburns/gui/gl"
 	"github.com/eaburns/gui/sdl"
+	"github.com/eaburns/gui/thread0"
 	"github.com/eaburns/gui/ui"
 )
 
@@ -24,7 +26,7 @@ func main() {
 	}
 	gl.Init(0, width-1, 0, height-1)
 	go mainFunc()
-	ui.Start()
+	thread0.Hijack()
 }
 
 func mainFunc() {
@@ -37,8 +39,7 @@ func mainFunc() {
 		select {
 		case ev, ok := <-win.Events():
 			if !ok {
-				ui.Stop()
-				return
+				os.Exit(0)
 			}
 			fmt.Println(ev)
 			if wEv, ok := ev.(ui.WinEvent); ok && wEv.Type == ui.WinClose {
@@ -56,7 +57,7 @@ func mainFunc() {
 
 func draw() error {
 	var err error
-	ui.Do(func() {
+	thread0.Do(func() {
 		gl.Color(color.White)
 		gl.ClearColorBuffer()
 		gl.BeginQuads()

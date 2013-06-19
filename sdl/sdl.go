@@ -19,6 +19,7 @@ import (
 	"time"
 	"unsafe"
 
+	"github.com/eaburns/gui/thread0"
 	"github.com/eaburns/gui/ui"
 )
 
@@ -35,7 +36,7 @@ func Init(hz int) error {
 	go func() {
 		tick := time.NewTicker(time.Duration(hz) * time.Millisecond)
 		for _ = range tick.C {
-			ui.Do(poll)
+			thread0.Do(poll)
 		}
 	}()
 	return nil
@@ -201,7 +202,7 @@ func NewWindow(title string, w, h int) (ui.Win, error) {
 	var err error
 	win := &window{w: w, h: h}
 
-	ui.Do(func() {
+	thread0.Do(func() {
 		win.win = C.SDL_CreateWindow(
 			C.CString(title),
 			C.SDL_WINDOWPOS_UNDEFINED,
@@ -230,7 +231,7 @@ func NewWindow(title string, w, h int) (ui.Win, error) {
 }
 
 func (win *window) Present() {
-	ui.Do(func() {
+	thread0.Do(func() {
 		C.SDL_RenderPresent(win.rend)
 	})
 }
@@ -242,7 +243,7 @@ func (win *window) Events() <-chan interface{} {
 
 // Close closes the window and cleans up its resources.
 func (win *window) Close() {
-	ui.Do(func() {
+	thread0.Do(func() {
 		id := uint32(C.SDL_GetWindowID(win.win))
 		C.SDL_DestroyWindow(win.win)
 		delete(wins, id)
