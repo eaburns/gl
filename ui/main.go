@@ -23,7 +23,6 @@ func main() {
 	if err := sdl.Init(20); err != nil {
 		panic(err)
 	}
-	gl.Init(0, width-1, 0, height-1)
 	go mainFunc()
 	thread0.Hijack()
 }

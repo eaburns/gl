@@ -15,14 +15,6 @@ import (
 	"image/color"
 )
 
-func Init(left, right, bottom, top float64) {
-	ClearColor(color.Black)
-	C.glMatrixMode(C.GL_PROJECTION)
-	C.gluOrtho2D(C.GLdouble(left), C.GLdouble(right), C.GLdouble(bottom), C.GLdouble(top))
-	C.glMatrixMode(C.GL_MODELVIEW)
-	C.glLoadIdentity()
-}
-
 func BeginQuads() {
 	C.glBegin(C.GL_POLYGON)
 }
