@@ -57,8 +57,10 @@ func mainFunc() {
 func draw() error {
 	var err error
 	thread0.Do(func() {
+		gl.ClearColor(color.Black)
+		gl.Clear(gl.ColorBufferBit)
+
 		gl.Color(color.White)
-		gl.ClearColorBuffer()
 		gl.BeginQuads()
 		gl.Vertex2(100, 100)
 		gl.Vertex2(200, 100)

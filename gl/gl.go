@@ -44,6 +44,7 @@ func Color(col color.Color) {
 		C.GLfloat(a)/255.0)
 }
 
+// ClearColor sets the color used to clear the color buffer.
 func ClearColor(col color.Color) {
 	r, g, b, a := col.RGBA()
 	C.glClearColor(
@@ -53,8 +54,17 @@ func ClearColor(col color.Color) {
 		C.GLclampf(a)/255.0)
 }
 
-func ClearColorBuffer() {
-	C.glClear(C.GL_COLOR_BUFFER_BIT)
+const (
+	// ColorBufferBit is a bit flag for Clear that specifies that the color buffer.
+	ColorBufferBit = C.GL_COLOR_BUFFER_BIT
+
+	// DepthBufferBit is a bit flag for Clear that specifies that the depth buffer.
+	DepthBufferBit = C.GL_DEPTH_BUFFER_BIT
+)
+
+// Clear Clears the buffers specified by the bits.
+func Clear(bits int) {
+	C.glClear(C.GLbitfield(bits))
 }
 
 var errorStrings = map[C.GLenum]string{
