@@ -1,5 +1,5 @@
-// Gl is a very hacky and lame set of OpenGL bindings simply used to verify that
-// OpenGL can draw to a window.
+// Package gl provides small, high-level, binding to OpenGL.
+// Functions in this package can only be called safely by the main go routine.
 package gl
 
 /*

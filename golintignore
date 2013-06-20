@@ -2,4 +2,3 @@ gl/deprecated.go:17:1: exported function BeginQuads should have comment
 gl/deprecated.go:21:1: exported function End should have comment
 gl/deprecated.go:25:1: exported function Vertex2 should have comment
 gl/deprecated.go:29:1: exported function Color should have comment
-gl/gl.go:1:1: package comment should be of the form "Package gl ..."
