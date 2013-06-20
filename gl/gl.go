@@ -33,8 +33,9 @@ const (
 )
 
 // Clear Clears the buffers specified by the bits.
-func Clear(bits int) {
+func Clear(bits int) error {
 	C.glClear(C.GLbitfield(bits))
+	return checkError("glClear")
 }
 
 var errorStrings = map[C.GLenum]string{
@@ -48,11 +49,14 @@ var errorStrings = map[C.GLenum]string{
 	C.GL_STACK_OVERFLOW:                "GL_STACK_OVERFLOW",
 }
 
-// Error returns an error from OpenGL, or nil if there was no error.
-func Error() error {
+func checkError(lastCall string) error {
 	e := C.glGetError()
 	if e == C.GL_NO_ERROR {
 		return nil
 	}
-	return errors.New(errorStrings[e])
+	return errors.New(lastCall + ": " + errorStrings[e])
+}
+
+func makeError(p string) error {
+	return errors.New(p + ": " + errorStrings[C.glGetError()])
 }

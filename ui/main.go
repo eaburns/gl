@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"image/color"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/eaburns/gui/gl"
@@ -17,6 +18,11 @@ import (
 const (
 	width  = 640
 	height = 480
+)
+
+var (
+	prog *gl.Program
+	buf  *gl.Buffer
 )
 
 func main() {
@@ -32,6 +38,11 @@ func mainFunc() {
 	if err != nil {
 		panic(err)
 	}
+
+	if err := setup(); err != nil {
+		panic(err)
+	}
+
 	tick := time.NewTicker(20 * time.Millisecond)
 	for {
 		select {
@@ -53,20 +64,66 @@ func mainFunc() {
 	panic("Unreachable")
 }
 
+func setup() error {
+	var err error
+	thread0.Do(func() {
+		v := strings.NewReader(vertShader)
+		f := strings.NewReader(fragShader)
+		prog, err = gl.NewProgram(v, f)
+		if err != nil {
+			return
+		}
+
+		buf, err = gl.NewArrayBuffer()
+		if err != nil {
+			return
+		}
+
+		err = buf.SetData(
+			gl.StaticDraw,
+			0.75, 0.75, 0.0, 1.0,
+			0.75, -0.75, 0.0, 1.0,
+			-0.75, -0.75, 0.0, 1.0,
+		)
+	})
+	return err
+}
+
 func draw() error {
 	var err error
 	thread0.Do(func() {
 		gl.ClearColor(color.Black)
-		gl.Clear(gl.ColorBufferBit)
+		if err = gl.Clear(gl.ColorBufferBit); err != nil {
+			return
+		}
 
-		gl.Color(color.White)
-		gl.BeginQuads()
-		gl.Vertex2(100, 100)
-		gl.Vertex2(200, 100)
-		gl.Vertex2(200, 200)
-		gl.Vertex2(100, 200)
-		gl.End()
-		err = gl.Error()
+		if err = buf.Bind(); err != nil {
+			return
+		}
+
+		if err = prog.SetVertexAttributeData("position", 4, 0, 0); err != nil {
+			return
+		}
+
+		err = prog.DrawArrays(gl.Triangles, 0, 3)
 	})
 	return err
 }
+
+var (
+	vertShader = `
+	        #version 120
+	        
+	        attribute vec4 position;
+	        
+	        void main(){
+	               gl_Position = position;
+	        }`
+
+	fragShader = `
+	        #version 120
+	        
+	        void main(){
+	               gl_FragColor = vec4(1, 1, 1, 1);
+	        }`
+)
