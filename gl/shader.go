@@ -135,9 +135,8 @@ func compileErrMsg(sh C.GLuint) string {
 }
 
 // Delete deletes the program, freeing its resources.
-func (p *Program) Delete() error {
+func (p *Program) Delete() {
 	C.glDeleteProgram(p.prog)
-	return checkError("glDeleteProgram")
 }
 
 // SetUniform sets the value(s) for a uniform.
@@ -145,12 +144,11 @@ func (p *Program) Delete() error {
 func (p *Program) SetUniform(name string, f ...float64) error {
 	C.glUseProgram(p.prog)
 	defer C.glUseProgram(0)
-
 	l, err := p.uniformLocation(name)
-	if err != nil {
-		return err
+	if err == nil {
+		uniform(l, f...)
 	}
-	return uniform(l, f...)
+	return err
 }
 
 func (p *Program) uniformLocation(name string) (C.GLint, error) {
@@ -162,14 +160,14 @@ func (p *Program) uniformLocation(name string) (C.GLint, error) {
 	cstr := glstring(name)
 	defer C.free(unsafe.Pointer(cstr))
 	if l = C.glGetUniformLocation(p.prog, cstr); l < 0 {
-		return -1, makeError("Failed to get uniform location")
+		return -1, errors.New("Failed to get uniform location for " + name)
 	}
 
 	p.unifLocs[name] = l
 	return l, nil
 }
 
-func uniform(l C.GLint, f ...float64) error {
+func uniform(l C.GLint, f ...float64) {
 	switch len(f) {
 	case 1:
 		C.glUniform1f(l, C.GLfloat(f[0]))
@@ -182,7 +180,6 @@ func uniform(l C.GLint, f ...float64) error {
 	default:
 		panic("Uniform requires 1, 2, 3, or 4 values")
 	}
-	return checkError("glUniformXf")
 }
 
 // SetVertexAttributeData sets vertex data for the named attribute to that of the
@@ -195,6 +192,7 @@ func (p *Program) SetVertexAttributeData(name string, size, stride, offs int) er
 	if err != nil {
 		return err
 	}
+
 	C.glVertexAttribPointer(
 		C.GLuint(l),
 		C.GLint(size),
@@ -202,7 +200,7 @@ func (p *Program) SetVertexAttributeData(name string, size, stride, offs int) er
 		C.GL_FALSE,
 		C.GLsizei(stride),
 		unsafe.Pointer(uintptr(offs)))
-	return checkError("glVertexAttribPointer")
+	return nil
 }
 
 func (p *Program) attributeLocation(name string) (C.GLint, error) {
@@ -214,7 +212,7 @@ func (p *Program) attributeLocation(name string) (C.GLint, error) {
 	cstr := glstring(name)
 	defer C.free(unsafe.Pointer(cstr))
 	if l = C.glGetAttribLocation(p.prog, cstr); l < 0 {
-		return -1, makeError("Failed to get attribute location")
+		return -1, errors.New("Failed to get attribute location for " + name)
 	}
 
 	p.attrLocs[name] = l
@@ -238,7 +236,7 @@ const (
 )
 
 // DrawArrays draws using this program an all vertex attribute arrays that that have been set.
-func (p *Program) DrawArrays(mode DrawMode, first, count int) error {
+func (p *Program) DrawArrays(mode DrawMode, first, count int) {
 	C.glUseProgram(p.prog)
 	defer C.glUseProgram(0)
 
@@ -249,28 +247,15 @@ func (p *Program) DrawArrays(mode DrawMode, first, count int) error {
 		i++
 	}
 
-	for i, l := range alocs {
+	for _, l := range alocs {
 		C.glEnableVertexAttribArray(l)
-
-		if err := checkError("glEnableVertexAttribArray"); err != nil {
-			for ; i >= 0; i-- {
-				C.glDisableVertexAttribArray(alocs[i])
-			}
-			return err
-		}
 	}
 
 	C.glDrawArrays(C.GLenum(mode), C.GLint(first), C.GLsizei(count))
-	err := checkError("glDrawArrays")
 
 	for _, l := range alocs {
 		C.glDisableVertexAttribArray(l)
 	}
-	if err == nil {
-		return checkError("glDisableVertexAttribArray")
-	}
-
-	return err
 }
 
 // Glstring copies a string into a C string and returns it cast into a *C.GLchar.
@@ -294,22 +279,20 @@ type Buffer struct {
 }
 
 // NewArrayBuffer returns new buffer object using the GL_ARRAY_BUFFER target.
-func NewArrayBuffer() (*Buffer, error) {
+func NewArrayBuffer() *Buffer {
 	b := Buffer{target: C.GL_ARRAY_BUFFER}
 	C.glGenBuffers(1, &b.buf)
-	return &b, checkError("glGenBuffers")
+	return &b
 }
 
 // Delete deletes the buffer.
-func (b *Buffer) Delete() error {
+func (b *Buffer) Delete() {
 	C.glDeleteBuffers(1, &b.buf)
-	return checkError("glDeleteBuffers")
 }
 
 // Bind binds the buffer.
-func (b *Buffer) Bind() error {
+func (b *Buffer) Bind() {
 	C.glBindBuffer(b.target, b.buf)
-	return checkError("glBindBuffer")
 }
 
 // DataUsage is a hint specifying how buffer data will be used.
@@ -338,19 +321,15 @@ const (
 // SetData sets the buffer's data to the given floats.
 // If the buffer has already been allocated for the same usage, with sufficient
 // capacity then it is reused, otherwise it is reallocated.
-func (b *Buffer) SetData(usage DataUsage, fs ...float32) error {
-	if err := b.Bind(); err != nil {
-		return err
-	}
+func (b *Buffer) SetData(usage DataUsage, fs ...float32) {
+	b.Bind()
 
 	data := unsafe.Pointer(&fs[0])
 	sz := len(fs) * 4
 	if sz <= b.capacity && usage == b.usage {
 		C.glBufferSubData(b.target, 0, C.GLsizeiptr(sz), data)
-		return checkError("glBufferSubData")
 	}
 	b.capacity = sz
 	b.usage = usage
 	C.glBufferData(b.target, C.GLsizeiptr(sz), data, C.GLenum(b.usage))
-	return checkError("glBufferData")
 }

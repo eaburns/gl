@@ -39,9 +39,7 @@ func mainFunc() {
 		panic(err)
 	}
 
-	if err := setup(); err != nil {
-		panic(err)
-	}
+	setup()
 
 	tick := time.NewTicker(20 * time.Millisecond)
 	for {
@@ -55,59 +53,40 @@ func mainFunc() {
 				win.Close()
 			}
 		case <-tick.C:
-			if err := draw(); err != nil {
-				panic(err)
-			}
+			draw()
 			win.Present()
 		}
 	}
 	panic("Unreachable")
 }
 
-func setup() error {
-	var err error
+func setup() {
 	thread0.Do(func() {
 		v := strings.NewReader(vertShader)
 		f := strings.NewReader(fragShader)
-		prog, err = gl.NewProgram(v, f)
-		if err != nil {
-			return
+		var err error
+		if prog, err = gl.NewProgram(v, f); err != nil {
+			panic(err)
 		}
 
-		buf, err = gl.NewArrayBuffer()
-		if err != nil {
-			return
-		}
-
-		err = buf.SetData(
+		buf = gl.NewArrayBuffer()
+		buf.SetData(
 			gl.StaticDraw,
 			0.75, 0.75, 0.0, 1.0,
 			0.75, -0.75, 0.0, 1.0,
 			-0.75, -0.75, 0.0, 1.0,
 		)
 	})
-	return err
 }
 
-func draw() error {
-	var err error
+func draw() {
 	thread0.Do(func() {
 		gl.ClearColor(color.Black)
-		if err = gl.Clear(gl.ColorBufferBit); err != nil {
-			return
-		}
-
-		if err = buf.Bind(); err != nil {
-			return
-		}
-
-		if err = prog.SetVertexAttributeData("position", 4, 0, 0); err != nil {
-			return
-		}
-
-		err = prog.DrawArrays(gl.Triangles, 0, 3)
+		gl.Clear(gl.ColorBufferBit)
+		buf.Bind()
+		prog.SetVertexAttributeData("position", 4, 0, 0)
+		prog.DrawArrays(gl.Triangles, 0, 3)
 	})
-	return err
 }
 
 var (
