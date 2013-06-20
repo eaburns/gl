@@ -9,10 +9,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/eaburns/gui/gl"
-	"github.com/eaburns/gui/sdl"
 	"github.com/eaburns/gui/thread0"
 	"github.com/eaburns/gui/ui"
+	"github.com/eaburns/gui/ui/gl"
+	"github.com/eaburns/gui/ui/sdl"
 )
 
 const (
