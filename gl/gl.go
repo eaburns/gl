@@ -24,16 +24,19 @@ func ClearColor(col color.Color) {
 		C.GLclampf(a)/255.0)
 }
 
+// ClearFlags is a bitset type for the flags to Clear.
+type ClearFlags C.GLbitfield
+
 const (
 	// ColorBufferBit is a bit flag for Clear that specifies that the color buffer.
-	ColorBufferBit = C.GL_COLOR_BUFFER_BIT
+	ColorBufferBit ClearFlags = C.GL_COLOR_BUFFER_BIT
 
 	// DepthBufferBit is a bit flag for Clear that specifies that the depth buffer.
-	DepthBufferBit = C.GL_DEPTH_BUFFER_BIT
+	DepthBufferBit ClearFlags = C.GL_DEPTH_BUFFER_BIT
 )
 
 // Clear Clears the buffers specified by the bits.
-func Clear(bits int) {
+func Clear(bits ClearFlags) {
 	C.glClear(C.GLbitfield(bits))
 }
 
