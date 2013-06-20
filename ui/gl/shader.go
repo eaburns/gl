@@ -141,7 +141,7 @@ func (p *Program) Delete() {
 
 // SetUniform sets the value(s) for a uniform.
 // The variadic parameter must contain 1, 2, 3, or 4 values.
-func (p *Program) SetUniform(name string, f ...float64) error {
+func (p *Program) SetUniform(name string, f ...float32) error {
 	C.glUseProgram(p.prog)
 	defer C.glUseProgram(0)
 	l, err := p.uniformLocation(name)
@@ -167,7 +167,7 @@ func (p *Program) uniformLocation(name string) (C.GLint, error) {
 	return l, nil
 }
 
-func uniform(l C.GLint, f ...float64) {
+func uniform(l C.GLint, f ...float32) {
 	switch len(f) {
 	case 1:
 		C.glUniform1f(l, C.GLfloat(f[0]))
