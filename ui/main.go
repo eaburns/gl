@@ -6,23 +6,16 @@ import (
 	"fmt"
 	"image/color"
 	"os"
-	"strings"
 	"time"
 
 	"github.com/eaburns/gui/thread0"
 	"github.com/eaburns/gui/ui"
-	"github.com/eaburns/gui/ui/gl"
 	"github.com/eaburns/gui/ui/sdl"
 )
 
 const (
 	width  = 640
 	height = 480
-)
-
-var (
-	prog *gl.Program
-	buf  *gl.Buffer
 )
 
 func main() {
@@ -39,7 +32,7 @@ func mainFunc() {
 		panic(err)
 	}
 
-	setup()
+	canvas := ui.NewCanvas()
 
 	tick := time.NewTicker(20 * time.Millisecond)
 	for {
@@ -53,56 +46,12 @@ func mainFunc() {
 				win.Close()
 			}
 		case <-tick.C:
-			draw()
+			canvas.Clear(color.Black)
+			canvas.FillRect(10, 10, 20, 50, color.RGBA{R: 255, A: 255})
+			canvas.FillRect(100, 100, 50, 50, color.RGBA{B: 255, A: 255})
+			canvas.FillRect(200, 200, 100, 100, color.RGBA{G: 255, A: 255})
 			win.Present()
 		}
 	}
 	panic("Unreachable")
 }
-
-func setup() {
-	thread0.Do(func() {
-		v := strings.NewReader(vertShader)
-		f := strings.NewReader(fragShader)
-		var err error
-		if prog, err = gl.NewProgram(v, f); err != nil {
-			panic(err)
-		}
-
-		buf = gl.NewArrayBuffer()
-		buf.SetData(
-			gl.StaticDraw,
-			0.75, 0.75, 0.0, 1.0,
-			0.75, -0.75, 0.0, 1.0,
-			-0.75, -0.75, 0.0, 1.0,
-		)
-	})
-}
-
-func draw() {
-	thread0.Do(func() {
-		gl.ClearColor(color.Black)
-		gl.Clear(gl.ColorBufferBit)
-		buf.Bind()
-		prog.SetVertexAttributeData("position", 4, 0, 0)
-		prog.DrawArrays(gl.Triangles, 0, 3)
-	})
-}
-
-var (
-	vertShader = `
-	        #version 120
-	        
-	        attribute vec4 position;
-	        
-	        void main(){
-	               gl_Position = position;
-	        }`
-
-	fragShader = `
-	        #version 120
-	        
-	        void main(){
-	               gl_FragColor = vec4(1, 1, 1, 1);
-	        }`
-)
