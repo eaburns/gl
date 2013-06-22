@@ -13,6 +13,8 @@ import (
 
 // A Canvas provides a high-level interface for drawing 2d graphics.
 type Canvas struct {
+	lineProg      *gl.Program
+	lineVerts     *gl.Buffer
 	solidRectProg *gl.Program
 	imgRectProg   *gl.Program
 	rectVerts     *gl.Buffer
@@ -25,11 +27,23 @@ func NewCanvas() *Canvas {
 		gl.Enable(gl.Texture2D)
 		gl.Enable(gl.Blend)
 		gl.BlendFunc(gl.SrcAlpha, gl.OneMinusSrcAlpha)
+		c.lineProg = loadLineProg()
+		c.lineVerts = gl.NewArrayBuffer()
 		c.solidRectProg = loadSolidRectProg()
 		c.imgRectProg = loadImgRectProg()
 		c.rectVerts = makeRectBuffer()
 	})
 	return c
+}
+
+func loadLineProg() *gl.Program {
+	v := strings.NewReader(lineVertShader)
+	f := strings.NewReader(solidFragShader)
+	p, err := gl.NewProgram(v, f)
+	if err != nil {
+		panic(err)
+	}
+	return p
 }
 
 func loadSolidRectProg() *gl.Program {
@@ -67,6 +81,8 @@ func makeRectBuffer() *gl.Buffer {
 // Close releases the resources for the canvas.
 func (c *Canvas) Close() {
 	thread0.Do(func() {
+		c.lineProg.Delete()
+		c.lineVerts.Delete()
 		c.solidRectProg.Delete()
 		c.imgRectProg.Delete()
 		c.rectVerts.Delete()
@@ -78,6 +94,35 @@ func (c *Canvas) Clear(col color.Color) {
 	thread0.Do(func() {
 		gl.ClearColor(col)
 		gl.Clear(gl.ColorBufferBit)
+	})
+}
+
+// StrokeLine strokes a line of the given color and width.
+func (c *Canvas) StrokeLine(col color.Color, width float32, pts ...[2]float32) {
+	thread0.Do(func() {
+		gl.LineWidth(width)
+
+		r, g, b, a := col.RGBA()
+		c.lineProg.SetUniform("color",
+			float32(r)/0xFFFF,
+			float32(g)/0xFFFF,
+			float32(b)/0xFFFF,
+			float32(a)/0xFFFF,
+		)
+
+		data := make([]float32, len(pts)*2)
+		for i, p := range pts {
+			data[2*i] = p[0]
+			data[(2*i)+1] = p[1]
+		}
+		c.lineVerts.SetData(gl.DynamicDraw, data...)
+
+		c.lineVerts.Bind()
+		c.lineProg.SetVertexAttributeData("vert", 2, 0, 0)
+		c.lineProg.DrawArrays(gl.LineStrip, 0, len(pts))
+		if err := gl.CheckError(); err != nil {
+			panic(err)
+		}
 	})
 }
 
@@ -155,6 +200,13 @@ func (c *Canvas) DrawImage(x, y float32, img *Image) {
 }
 
 var (
+	lineVertShader = `
+		#version 120
+		attribute vec2 vert;
+		void main(){
+			gl_Position = gl_ModelViewProjectionMatrix * vec4(vert, 0, 1);
+		}`
+
 	rectVertShader = `
 		#version 120
 		attribute vec4 vert;

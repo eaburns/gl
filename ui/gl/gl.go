@@ -77,6 +77,14 @@ func Clear(bits ClearFlags) {
 	C.glClear(C.GLbitfield(bits))
 }
 
+// LineWidth sets the current line width.  If w non-positive then it is set to 1.
+func LineWidth(w float32) {
+	if w <= 0 {
+		w = 1
+	}
+	C.glLineWidth(C.GLfloat(w))
+}
+
 var errorStrings = map[C.GLenum]string{
 	C.GL_NO_ERROR:                      "GL_NO_ERROR",
 	C.GL_INVALID_ENUM:                  "GL_INVALID_ENUM",

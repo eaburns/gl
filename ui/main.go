@@ -57,6 +57,11 @@ func mainFunc() {
 			canvas.FillRect(10, 10, 20, 50, color.RGBA{R: 255, A: 255})
 			canvas.FillRect(100, 100, 50, 50, color.RGBA{B: 255, A: 255})
 			canvas.FillRect(200, 200, 100, 100, color.RGBA{G: 255, A: 255})
+
+			canvas.StrokeLine(color.RGBA{R: 255, A: 255}, 1,
+				[2]float32{width - 1, 0},
+				[2]float32{0, height - 1})
+
 			canvas.DrawImage(200, 200, img)
 			win.Present()
 		}
