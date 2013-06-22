@@ -19,10 +19,10 @@ type Capability C.GLenum
 
 const (
 	// Texture2D is the 2D texture target.
-	Texture2D = C.GL_TEXTURE_2D
+	Texture2D Capability = C.GL_TEXTURE_2D
 
 	// Blend is the alpha blending capability.
-	Blend = C.GL_BLEND
+	Blend Capability = C.GL_BLEND
 )
 
 // Enable enables OpenGL capabilities.
@@ -40,10 +40,10 @@ type BlendFactor C.GLenum
 
 const (
 	// SrcAlpha uses the source color's alpha value.
-	SrcAlpha = C.GL_SRC_ALPHA
+	SrcAlpha BlendFactor = C.GL_SRC_ALPHA
 
 	// OneMinusSrcAlpha uses 1 minus the source color's alpha value.
-	OneMinusSrcAlpha = C.GL_ONE_MINUS_SRC_ALPHA
+	OneMinusSrcAlpha BlendFactor = C.GL_ONE_MINUS_SRC_ALPHA
 )
 
 // BlendFunc sets the way that colors are blended.

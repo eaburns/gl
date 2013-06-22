@@ -3,6 +3,8 @@ package ui
 import (
 	"image"
 	"image/color"
+	"image/png"
+	"os"
 	"strings"
 
 	"github.com/eaburns/gui/thread0"
@@ -117,6 +119,21 @@ func NewImage(img *image.NRGBA) *Image {
 		Width:  float32(img.Bounds().Dx()),
 		Height: float32(img.Bounds().Dy()),
 	}
+}
+
+// LoadPng returns an *Image loaded from a PNG file.
+func LoadPng(path string) (*Image, error) {
+	r, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	defer r.Close()
+
+	img, err := png.Decode(r)
+	if err != nil {
+		return nil, err
+	}
+	return NewImage(img.(*image.NRGBA)), nil
 }
 
 // DrawImage draws an image at the given location on the canvas.

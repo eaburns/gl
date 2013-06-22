@@ -4,9 +4,7 @@ package main
 
 import (
 	"fmt"
-	"image"
 	"image/color"
-	"image/png"
 	"os"
 	"time"
 
@@ -16,9 +14,9 @@ import (
 )
 
 const (
-	width     = 640
-	height    = 480
-	imagePath = "ui/gopher.png"
+	width   = 640
+	height  = 480
+	imgPath = "ui/gopher.png"
 )
 
 func main() {
@@ -36,7 +34,10 @@ func mainFunc() {
 	}
 
 	canvas := ui.NewCanvas()
-	img := ui.NewImage(loadImage())
+	img, err := ui.LoadPng(imgPath)
+	if err != nil {
+		panic(err)
+	}
 	img.Width = 100
 	img.Height = 100
 
@@ -61,17 +62,4 @@ func mainFunc() {
 		}
 	}
 	panic("Unreachable")
-}
-
-func loadImage() *image.NRGBA {
-	r, err := os.Open(imagePath)
-	if err != nil {
-		panic(err)
-	}
-	defer r.Close()
-	img, err := png.Decode(r)
-	if err != nil {
-		panic(err)
-	}
-	return img.(*image.NRGBA)
 }
