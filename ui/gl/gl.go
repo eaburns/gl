@@ -14,6 +14,43 @@ import (
 	"image/color"
 )
 
+// A Capability is a feature of OpenGL that can be enabled or disabled.
+type Capability C.GLenum
+
+const (
+	// Texture2D is the 2D texture target.
+	Texture2D = C.GL_TEXTURE_2D
+
+	// Blend is the alpha blending capability.
+	Blend = C.GL_BLEND
+)
+
+// Enable enables OpenGL capabilities.
+func Enable(c Capability) {
+	C.glEnable(C.GLenum(c))
+}
+
+// Disable disables OpenGL capabilities.
+func Disable(c Capability) {
+	C.glDisable(C.GLenum(c))
+}
+
+// BlendFactor specifies how either source or destination colors are blended.
+type BlendFactor C.GLenum
+
+const (
+	// SrcAlpha uses the source color's alpha value.
+	SrcAlpha = C.GL_SRC_ALPHA
+
+	// OneMinusSrcAlpha uses 1 minus the source color's alpha value.
+	OneMinusSrcAlpha = C.GL_ONE_MINUS_SRC_ALPHA
+)
+
+// BlendFunc sets the way that colors are blended.
+func BlendFunc(srcFactor, dstFactor BlendFactor) {
+	C.glBlendFunc(C.GLenum(srcFactor), C.GLenum(dstFactor))
+}
+
 // ClearColor sets the color used to clear the color buffer.
 func ClearColor(col color.Color) {
 	r, g, b, a := col.RGBA()
