@@ -32,18 +32,6 @@ func NewCanvas() *Canvas {
 	return c
 }
 
-func makeRectBuffer() *gl.Buffer {
-	buf := gl.NewArrayBuffer()
-	buf.SetData(
-		gl.StaticDraw,
-		0, 0, 0, 0,
-		1, 0, 1, 0,
-		0, 1, 0, 1,
-		1, 1, 1, 1,
-	)
-	return buf
-}
-
 func loadSolidShader() *gl.Program {
 	v := strings.NewReader(rectVertShader)
 	f := strings.NewReader(solidFragShader)
@@ -62,6 +50,18 @@ func loadTextureShader() *gl.Program {
 		panic(err)
 	}
 	return p
+}
+
+func makeRectBuffer() *gl.Buffer {
+	buf := gl.NewArrayBuffer()
+	buf.SetData(
+		gl.StaticDraw,
+		0, 0, 0, 0,
+		1, 0, 1, 0,
+		0, 1, 0, 1,
+		1, 1, 1, 1,
+	)
+	return buf
 }
 
 // Close releases the resources for the canvas.
