@@ -13,9 +13,9 @@ import (
 
 // A Canvas provides a high-level interface for drawing 2d graphics.
 type Canvas struct {
-	solid *gl.Program
-	tex   *gl.Program
-	rect  *gl.Buffer
+	solidRectProg *gl.Program
+	imgRectProg   *gl.Program
+	rectVerts     *gl.Buffer
 }
 
 // NewCanvas returns a new canvas.
@@ -25,14 +25,14 @@ func NewCanvas() *Canvas {
 		gl.Enable(gl.Texture2D)
 		gl.Enable(gl.Blend)
 		gl.BlendFunc(gl.SrcAlpha, gl.OneMinusSrcAlpha)
-		c.solid = loadSolidShader()
-		c.tex = loadTextureShader()
-		c.rect = makeRectBuffer()
+		c.solidRectProg = loadSolidRectProg()
+		c.imgRectProg = loadImgRectProg()
+		c.rectVerts = makeRectBuffer()
 	})
 	return c
 }
 
-func loadSolidShader() *gl.Program {
+func loadSolidRectProg() *gl.Program {
 	v := strings.NewReader(rectVertShader)
 	f := strings.NewReader(solidFragShader)
 	p, err := gl.NewProgram(v, f)
@@ -42,7 +42,7 @@ func loadSolidShader() *gl.Program {
 	return p
 }
 
-func loadTextureShader() *gl.Program {
+func loadImgRectProg() *gl.Program {
 	v := strings.NewReader(rectVertShader)
 	f := strings.NewReader(texFragShader)
 	p, err := gl.NewProgram(v, f)
@@ -67,9 +67,9 @@ func makeRectBuffer() *gl.Buffer {
 // Close releases the resources for the canvas.
 func (c *Canvas) Close() {
 	thread0.Do(func() {
-		c.solid.Delete()
-		c.tex.Delete()
-		c.rect.Delete()
+		c.solidRectProg.Delete()
+		c.imgRectProg.Delete()
+		c.rectVerts.Delete()
 	})
 }
 
@@ -86,18 +86,18 @@ func (c *Canvas) Clear(col color.Color) {
 func (c *Canvas) FillRect(x, y, w, h float32, col color.Color) {
 	thread0.Do(func() {
 		r, g, b, a := col.RGBA()
-		c.solid.SetUniform("color",
+		c.solidRectProg.SetUniform("color",
 			float32(r)/0xFFFF,
 			float32(g)/0xFFFF,
 			float32(b)/0xFFFF,
 			float32(a)/0xFFFF,
 		)
 
-		c.rect.Bind()
-		c.solid.SetVertexAttributeData("vert", 4, 0, 0)
-		c.solid.SetUniform("loc", x, y)
-		c.solid.SetUniform("size", w, h)
-		c.solid.DrawArrays(gl.TriangleStrip, 0, 4)
+		c.rectVerts.Bind()
+		c.solidRectProg.SetVertexAttributeData("vert", 4, 0, 0)
+		c.solidRectProg.SetUniform("loc", x, y)
+		c.solidRectProg.SetUniform("size", w, h)
+		c.solidRectProg.DrawArrays(gl.TriangleStrip, 0, 4)
 		if err := gl.CheckError(); err != nil {
 			panic(err)
 		}
@@ -141,13 +141,13 @@ func LoadPng(path string) (*Image, error) {
 func (c *Canvas) DrawImage(x, y float32, img *Image) {
 	thread0.Do(func() {
 		img.tex.Bind(0)
-		c.tex.SetUniform("tex", 0)
+		c.imgRectProg.SetUniform("tex", 0)
 
-		c.rect.Bind()
-		c.tex.SetVertexAttributeData("vert", 4, 0, 0)
-		c.tex.SetUniform("loc", x, y)
-		c.tex.SetUniform("size", img.Width, img.Height)
-		c.tex.DrawArrays(gl.TriangleStrip, 0, 4)
+		c.rectVerts.Bind()
+		c.imgRectProg.SetVertexAttributeData("vert", 4, 0, 0)
+		c.imgRectProg.SetUniform("loc", x, y)
+		c.imgRectProg.SetUniform("size", img.Width, img.Height)
+		c.imgRectProg.DrawArrays(gl.TriangleStrip, 0, 4)
 		if err := gl.CheckError(); err != nil {
 			panic(err)
 		}
