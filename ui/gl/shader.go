@@ -11,6 +11,7 @@ import "C"
 
 import (
 	"errors"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"unsafe"
@@ -141,14 +142,69 @@ func (p *Program) Delete() {
 
 // SetUniform sets the value(s) for a uniform.
 // The variadic parameter must contain 1, 2, 3, or 4 values.
-func (p *Program) SetUniform(name string, f ...float32) error {
+func (p *Program) SetUniform(name string, vls ...interface{}) error {
 	C.glUseProgram(p.prog)
 	defer C.glUseProgram(0)
 	l, err := p.uniformLocation(name)
-	if err == nil {
-		uniform(l, f...)
+	if err != nil {
+		return err
 	}
-	return err
+
+	if len(vls) == 0 || len(vls) > 4 {
+		panic("Uniform requires 1, 2, 3, or 4 values")
+	}
+
+	switch vls[0].(type) {
+	case float32:
+		switch len(vls) {
+		case 1:
+			C.glUniform1f(l, C.GLfloat(vls[0].(float32)))
+		case 2:
+			C.glUniform2f(l,
+				C.GLfloat(vls[0].(float32)),
+				C.GLfloat(vls[1].(float32)),
+			)
+		case 3:
+			C.glUniform3f(l,
+				C.GLfloat(vls[0].(float32)),
+				C.GLfloat(vls[1].(float32)),
+				C.GLfloat(vls[2].(float32)),
+			)
+		case 4:
+			C.glUniform4f(l,
+				C.GLfloat(vls[0].(float32)),
+				C.GLfloat(vls[1].(float32)),
+				C.GLfloat(vls[2].(float32)),
+				C.GLfloat(vls[3].(float32)),
+			)
+		}
+	case int:
+		switch len(vls) {
+		case 1:
+			C.glUniform1i(l, C.GLint(vls[0].(int)))
+		case 2:
+			C.glUniform2i(l,
+				C.GLint(vls[0].(int)),
+				C.GLint(vls[1].(int)),
+			)
+		case 3:
+			C.glUniform3i(l,
+				C.GLint(vls[0].(int)),
+				C.GLint(vls[1].(int)),
+				C.GLint(vls[2].(int)),
+			)
+		case 4:
+			C.glUniform4i(l,
+				C.GLint(vls[0].(int)),
+				C.GLint(vls[1].(int)),
+				C.GLint(vls[2].(int)),
+				C.GLint(vls[3].(int)),
+			)
+		}
+	default:
+		panic(fmt.Sprintf("Unknown type in SetUniform: %T", vls[0]))
+	}
+	return nil
 }
 
 func (p *Program) uniformLocation(name string) (C.GLint, error) {
@@ -167,7 +223,7 @@ func (p *Program) uniformLocation(name string) (C.GLint, error) {
 	return l, nil
 }
 
-func uniform(l C.GLint, f ...float32) {
+func uniformf(l C.GLint, f ...float32) {
 	switch len(f) {
 	case 1:
 		C.glUniform1f(l, C.GLfloat(f[0]))
