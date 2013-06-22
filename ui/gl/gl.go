@@ -1,4 +1,4 @@
-// Package gl provides small, high-level, binding to OpenGL.
+// Package gl a provides small, high-level, binding to OpenGL.
 // Functions in this package can only be called safely by the main go routine.
 package gl
 
