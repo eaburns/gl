@@ -49,13 +49,13 @@ const (
 	DynamicDraw BufferDataUsage = C.GL_DYNAMIC_DRAW
 )
 
-// Data creates and initializes a buffer object's data store.
+// BufferData creates and initializes a buffer object's data store.
 func BufferData(targ BufferTarget, data interface{}, usage BufferDataUsage) {
 	_, sz, ptr := rawData(data)
 	C.glBufferData(C.GLenum(targ), C.GLsizeiptr(sz), ptr, C.GLenum(usage))
 }
 
-// SubData updates a subset of a buffer object's data store.
+// BufferSubData updates a subset of a buffer object's data store.
 func BufferSubData(targ BufferTarget, offs int, data interface{}) {
 	_, sz, ptr := rawData(data)
 	C.glBufferSubData(C.GLenum(targ), C.GLintptr(offs), C.GLsizeiptr(sz), ptr)
