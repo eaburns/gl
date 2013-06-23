@@ -1,4 +1,4 @@
-package gles
+package gl
 
 /*
 #define GL_GLEXT_PROTOTYPES
@@ -53,10 +53,10 @@ func rawData(i interface{}) (tipe DataType, sz int, ptr unsafe.Pointer) {
 	return tipe, nElms * int(elmSz), ptr
 }
 
-type AttributeLocation C.GLuint
+type VertexAttribArray C.GLuint
 
-// VertexAttribPointer defines an array of generic vertex attribute data.
-func VertexAttribPointer(l AttributeLocation, sz int, t DataType, norm bool, stride, offs int) {
+// Pointer defines an array of generic vertex attribute data.
+func (l VertexAttribArray) Pointer(sz int, t DataType, norm bool, stride, offs int) {
 	n := 0
 	if norm {
 		n = 1
@@ -64,13 +64,13 @@ func VertexAttribPointer(l AttributeLocation, sz int, t DataType, norm bool, str
 	C.glVertexAttribPointer(C.GLuint(l), C.GLint(sz), C.GLenum(t), C.GLboolean(n), C.GLsizei(stride), unsafe.Pointer(uintptr(offs)))
 }
 
-// EnableVertexAttribArray enables a generic vertex attribute array.
-func EnableVertexAttribArray(l AttributeLocation) {
+// Enable enables a generic vertex attribute array.
+func (l VertexAttribArray) Enable() {
 	C.glEnableVertexAttribArray(C.GLuint(l))
 }
 
-// DisableVertexAttribArray disables a generic vertex attribute array.
-func DisableVertexAttribArray(l AttributeLocation) {
+// Disable disables a generic vertex attribute array.
+func (l VertexAttribArray) Disable() {
 	C.glDisableVertexAttribArray(C.GLuint(l))
 }
 

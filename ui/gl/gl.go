@@ -1,8 +1,7 @@
-// Package gl a provides small, high-level, binding to OpenGL.
-// Functions in this package can only be called safely by the main go routine.
 package gl
 
 /*
+#define GL_GLEXT_PROTOTYPES
 #include <GL/gl.h>
 
 #cgo pkg-config: gl
@@ -14,15 +13,56 @@ import (
 	"image/color"
 )
 
+// ClearFlags is a bitset type for the flags to Clear.
+type ClearFlags C.GLbitfield
+
+const (
+	ColorBufferBit   ClearFlags = C.GL_COLOR_BUFFER_BIT
+	DepthBufferBit   ClearFlags = C.GL_DEPTH_BUFFER_BIT
+	StencilBufferBit ClearFlags = C.GL_STENCIL_BUFFER_BIT
+)
+
+// Clear clears buffers to preset values.
+func Clear(bits ClearFlags) {
+	C.glClear(C.GLbitfield(bits))
+}
+
+// ClearColor specifies clear values for the color buffers.
+func ClearColor(col color.Color) {
+	r, g, b, a := col.RGBA()
+	C.glClearColor(
+		C.GLclampf(r)/255.0,
+		C.GLclampf(g)/255.0,
+		C.GLclampf(b)/255.0,
+		C.GLclampf(a)/255.0)
+}
+
+// ClearDepth specifies the clear value for the depth buffer.
+func ClearDepth(d float32) {
+	C.glClearDepthf(C.GLfloat(d))
+}
+
+// ClearStencil specifies the clear value for the stencil buffer.
+func ClearStencil(s int) {
+	C.glClearStencil(C.GLint(s))
+}
+
+// Flush forces execution of GL commands in finite time.
+func Flush() {
+	C.glFlush()
+}
+
+// Finish blocks until all GL execution is complete.
+func Finish() {
+	C.glFinish()
+}
+
 // A Capability is a feature of OpenGL that can be enabled or disabled.
 type Capability C.GLenum
 
 const (
-	// Texture2D is the 2D texture target.
-	Texture2D Capability = C.GL_TEXTURE_2D
-
-	// Blend is the alpha blending capability.
-	Blend Capability = C.GL_BLEND
+	Blend  Capability = C.GL_BLEND
+	Dither Capability = C.GL_DITHER
 )
 
 // Enable enables OpenGL capabilities.
@@ -35,53 +75,33 @@ func Disable(c Capability) {
 	C.glDisable(C.GLenum(c))
 }
 
-// BlendFactor specifies how either source or destination colors are blended.
-type BlendFactor C.GLenum
+// BlendFunction specifies how either source or destination colors are blended.
+type BlendFunction C.GLenum
 
 const (
-	// SrcAlpha uses the source color's alpha value.
-	SrcAlpha BlendFactor = C.GL_SRC_ALPHA
-
-	// OneMinusSrcAlpha uses 1 minus the source color's alpha value.
-	OneMinusSrcAlpha BlendFactor = C.GL_ONE_MINUS_SRC_ALPHA
+	Zero                  BlendFunction = C.GL_ZERO
+	One                   BlendFunction = C.GL_ONE
+	SrcColor              BlendFunction = C.GL_SRC_COLOR
+	OneMinusSrcColor      BlendFunction = C.GL_ONE_MINUS_SRC_COLOR
+	SrcAlpha              BlendFunction = C.GL_SRC_ALPHA
+	OneMinusSrcAlpha      BlendFunction = C.GL_ONE_MINUS_SRC_ALPHA
+	DstColor              BlendFunction = C.GL_DST_COLOR
+	OneMinusDstColor      BlendFunction = C.GL_ONE_MINUS_DST_COLOR
+	DstAlpha              BlendFunction = C.GL_DST_ALPHA
+	OneMinusDstAlpha      BlendFunction = C.GL_ONE_MINUS_DST_ALPHA
+	ConstantColor         BlendFunction = C.GL_CONSTANT_COLOR
+	OneMinusConstantColor BlendFunction = C.GL_ONE_MINUS_CONSTANT_COLOR
+	ConstantAlpha         BlendFunction = C.GL_CONSTANT_ALPHA
+	OneMinusConstantAlpha BlendFunction = C.GL_ONE_MINUS_CONSTANT_ALPHA
 )
 
-// BlendFunc sets the way that colors are blended.
-func BlendFunc(srcFactor, dstFactor BlendFactor) {
+// BlendFunc specifies pixel arithmetic
+func BlendFunc(srcFactor, dstFactor BlendFunction) {
 	C.glBlendFunc(C.GLenum(srcFactor), C.GLenum(dstFactor))
 }
 
-// ClearColor sets the color used to clear the color buffer.
-func ClearColor(col color.Color) {
-	r, g, b, a := col.RGBA()
-	C.glClearColor(
-		C.GLclampf(r)/255.0,
-		C.GLclampf(g)/255.0,
-		C.GLclampf(b)/255.0,
-		C.GLclampf(a)/255.0)
-}
-
-// ClearFlags is a bitset type for the flags to Clear.
-type ClearFlags C.GLbitfield
-
-const (
-	// ColorBufferBit is a bit flag for Clear that specifies that the color buffer.
-	ColorBufferBit ClearFlags = C.GL_COLOR_BUFFER_BIT
-
-	// DepthBufferBit is a bit flag for Clear that specifies that the depth buffer.
-	DepthBufferBit ClearFlags = C.GL_DEPTH_BUFFER_BIT
-)
-
-// Clear Clears the buffers specified by the bits.
-func Clear(bits ClearFlags) {
-	C.glClear(C.GLbitfield(bits))
-}
-
-// LineWidth sets the current line width.  If w non-positive then it is set to 1.
+// LineWidth specifies the width of rasterized lines.
 func LineWidth(w float32) {
-	if w <= 0 {
-		w = 1
-	}
 	C.glLineWidth(C.GLfloat(w))
 }
 
@@ -96,15 +116,11 @@ var errorStrings = map[C.GLenum]string{
 	C.GL_STACK_OVERFLOW:                "GL_STACK_OVERFLOW",
 }
 
-// CheckError returns an error if on has occurred or else nil.
-func CheckError() error {
+// GetError returns error information: an error if one occurred or nil.
+func GetError() error {
 	e := C.glGetError()
 	if e == C.GL_NO_ERROR {
 		return nil
 	}
 	return errors.New(errorStrings[e])
-}
-
-func makeError(p string) error {
-	return errors.New(p + ": " + errorStrings[C.glGetError()])
 }

@@ -1,4 +1,4 @@
-package gles
+package gl
 
 /*
 #define GL_GLEXT_PROTOTYPES
@@ -50,13 +50,13 @@ const (
 )
 
 // Data creates and initializes a buffer object's data store.
-func (b Buffer) Data(targ BufferTarget, data interface{}, usage BufferDataUsage) {
+func BufferData(targ BufferTarget, data interface{}, usage BufferDataUsage) {
 	_, sz, ptr := rawData(data)
 	C.glBufferData(C.GLenum(targ), C.GLsizeiptr(sz), ptr, C.GLenum(usage))
 }
 
 // SubData updates a subset of a buffer object's data store.
-func (b Buffer) SubData(targ BufferTarget, offs int, data interface{}) {
+func BufferSubData(targ BufferTarget, offs int, data interface{}) {
 	_, sz, ptr := rawData(data)
 	C.glBufferSubData(C.GLenum(targ), C.GLintptr(offs), C.GLsizeiptr(sz), ptr)
 }

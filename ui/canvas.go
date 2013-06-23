@@ -5,7 +5,6 @@ import (
 	"image/color"
 	"image/png"
 	"os"
-	"strings"
 
 	"github.com/eaburns/gui/thread0"
 	"github.com/eaburns/gui/ui/gl"
@@ -13,69 +12,45 @@ import (
 
 // A Canvas provides a high-level interface for drawing 2d graphics.
 type Canvas struct {
-	lineProg      *gl.Program
-	lineVerts     *gl.Buffer
-	solidRectProg *gl.Program
-	imgRectProg   *gl.Program
-	rectVerts     *gl.Buffer
+	lineProg      gl.Program
+	lineVerts     gl.Buffer
+	solidRectProg gl.Program
+	imgRectProg   gl.Program
+	rectVerts     gl.Buffer
 }
 
 // NewCanvas returns a new canvas.
 func NewCanvas() *Canvas {
 	c := new(Canvas)
 	thread0.Do(func() {
-		gl.Enable(gl.Texture2D)
 		gl.Enable(gl.Blend)
 		gl.BlendFunc(gl.SrcAlpha, gl.OneMinusSrcAlpha)
-		c.lineProg = loadLineProg()
-		c.lineVerts = gl.NewArrayBuffer()
-		c.solidRectProg = loadSolidRectProg()
-		c.imgRectProg = loadImgRectProg()
-		c.rectVerts = makeRectBuffer()
+		c.lineProg = program(lineVertShader, solidFragShader)
+		c.solidRectProg = program(rectVertShader, solidFragShader)
+		c.imgRectProg = program(rectVertShader, texFragShader)
+
+		if err := gl.GetError(); err != nil {
+			panic(err)
+		}
+
+		bs := gl.GenBuffers(2)
+		c.lineVerts = bs[0]
+		c.rectVerts = bs[1]
+		c.rectVerts.Bind(gl.ArrayBuffer)
+		gl.BufferData(gl.ArrayBuffer,
+			[]int8{
+				0, 0, 0, 0,
+				1, 0, 1, 0,
+				0, 1, 0, 1,
+				1, 1, 1, 1,
+			},
+			gl.StaticDraw)
+
+		if err := gl.GetError(); err != nil {
+			panic(err)
+		}
 	})
 	return c
-}
-
-func loadLineProg() *gl.Program {
-	v := strings.NewReader(lineVertShader)
-	f := strings.NewReader(solidFragShader)
-	p, err := gl.NewProgram(v, f)
-	if err != nil {
-		panic(err)
-	}
-	return p
-}
-
-func loadSolidRectProg() *gl.Program {
-	v := strings.NewReader(rectVertShader)
-	f := strings.NewReader(solidFragShader)
-	p, err := gl.NewProgram(v, f)
-	if err != nil {
-		panic(err)
-	}
-	return p
-}
-
-func loadImgRectProg() *gl.Program {
-	v := strings.NewReader(rectVertShader)
-	f := strings.NewReader(texFragShader)
-	p, err := gl.NewProgram(v, f)
-	if err != nil {
-		panic(err)
-	}
-	return p
-}
-
-func makeRectBuffer() *gl.Buffer {
-	buf := gl.NewArrayBuffer()
-	buf.SetData(
-		gl.StaticDraw,
-		0, 0, 0, 0,
-		1, 0, 1, 0,
-		0, 1, 0, 1,
-		1, 1, 1, 1,
-	)
-	return buf
 }
 
 // Close releases the resources for the canvas.
@@ -94,6 +69,10 @@ func (c *Canvas) Clear(col color.Color) {
 	thread0.Do(func() {
 		gl.ClearColor(col)
 		gl.Clear(gl.ColorBufferBit)
+
+		if err := gl.GetError(); err != nil {
+			panic(err)
+		}
 	})
 }
 
@@ -102,8 +81,10 @@ func (c *Canvas) StrokeLine(col color.Color, width float32, pts ...[2]float32) {
 	thread0.Do(func() {
 		gl.LineWidth(width)
 
+		c.lineProg.Use()
+
 		r, g, b, a := col.RGBA()
-		c.lineProg.SetUniform("color",
+		c.lineProg.GetUniformLocation("color").Uniform(
 			float32(r)/0xFFFF,
 			float32(g)/0xFFFF,
 			float32(b)/0xFFFF,
@@ -115,14 +96,24 @@ func (c *Canvas) StrokeLine(col color.Color, width float32, pts ...[2]float32) {
 			data[2*i] = p[0]
 			data[(2*i)+1] = p[1]
 		}
-		c.lineVerts.SetData(gl.DynamicDraw, data...)
+		c.lineVerts.Bind(gl.ArrayBuffer)
+		gl.BufferData(gl.ArrayBuffer, data, gl.DynamicDraw)
 
-		c.lineVerts.Bind()
-		c.lineProg.SetVertexAttributeData("vert", 2, 0, 0)
-		c.lineProg.DrawArrays(gl.LineStrip, 0, len(pts))
-		if err := gl.CheckError(); err != nil {
+		if err := gl.GetError(); err != nil {
 			panic(err)
 		}
+
+		vattr := c.lineProg.GetAttribLocation("vert")
+		vattr.Pointer(2, gl.Float, false, 0, 0)
+		vattr.Enable()
+		gl.DrawArrays(gl.LineStrip, 0, len(pts))
+		vattr.Disable()
+
+		if err := gl.GetError(); err != nil {
+			panic(err)
+		}
+
+		gl.Program(0).Use()
 	})
 }
 
@@ -130,20 +121,25 @@ func (c *Canvas) StrokeLine(col color.Color, width float32, pts ...[2]float32) {
 // X and y specify the upper-right corner of the rectangle.
 func (c *Canvas) FillRect(x, y, w, h float32, col color.Color) {
 	thread0.Do(func() {
+		c.solidRectProg.Use()
+
 		r, g, b, a := col.RGBA()
-		c.solidRectProg.SetUniform("color",
+		c.solidRectProg.GetUniformLocation("color").Uniform(
 			float32(r)/0xFFFF,
 			float32(g)/0xFFFF,
 			float32(b)/0xFFFF,
 			float32(a)/0xFFFF,
 		)
+		c.solidRectProg.GetUniformLocation("loc").Uniform(x, y)
+		c.solidRectProg.GetUniformLocation("size").Uniform(w, h)
 
-		c.rectVerts.Bind()
-		c.solidRectProg.SetVertexAttributeData("vert", 4, 0, 0)
-		c.solidRectProg.SetUniform("loc", x, y)
-		c.solidRectProg.SetUniform("size", w, h)
-		c.solidRectProg.DrawArrays(gl.TriangleStrip, 0, 4)
-		if err := gl.CheckError(); err != nil {
+		c.rectVerts.Bind(gl.ArrayBuffer)
+		vattr := c.solidRectProg.GetAttribLocation("vert")
+		vattr.Pointer(4, gl.Byte, false, 0, 0)
+		vattr.Enable()
+		gl.DrawArrays(gl.TriangleStrip, 0, 4)
+		vattr.Disable()
+		if err := gl.GetError(); err != nil {
 			panic(err)
 		}
 	})
@@ -157,13 +153,22 @@ type Image struct {
 
 // NewImage returns a new *Image from a normalized RGBA image.
 func NewImage(img *image.NRGBA) *Image {
-	var t gl.Texture
-	thread0.Do(func() { t = gl.MakeImageTexture(img) })
-	return &Image{
-		tex:    t,
-		Width:  float32(img.Bounds().Dx()),
-		Height: float32(img.Bounds().Dy()),
-	}
+	var i Image
+	thread0.Do(func() {
+		i.tex = gl.GenTextures(1)[0]
+		i.tex.Bind(gl.Texture2D)
+		w := img.Bounds().Dx()
+		h := img.Bounds().Dy()
+		gl.TexImage2D(gl.Texture2D, 0, gl.RGBA, w, h, 0, gl.RGBA, img.Pix)
+		gl.TexParameter(gl.Texture2D, gl.TextureMagFilter, gl.Linear)
+		gl.TexParameter(gl.Texture2D, gl.TextureMinFilter, gl.Linear)
+		i.Width = float32(w)
+		i.Height = float32(h)
+		if err := gl.GetError(); err != nil {
+			panic(err)
+		}
+	})
+	return &i
 }
 
 // LoadPng returns an *Image loaded from a PNG file.
@@ -185,18 +190,56 @@ func LoadPng(path string) (*Image, error) {
 // X and y specify the upper-left corner of the image.
 func (c *Canvas) DrawImage(x, y float32, img *Image) {
 	thread0.Do(func() {
-		img.tex.Bind(0)
-		c.imgRectProg.SetUniform("tex", 0)
+		c.imgRectProg.Use()
 
-		c.rectVerts.Bind()
-		c.imgRectProg.SetVertexAttributeData("vert", 4, 0, 0)
-		c.imgRectProg.SetUniform("loc", x, y)
-		c.imgRectProg.SetUniform("size", img.Width, img.Height)
-		c.imgRectProg.DrawArrays(gl.TriangleStrip, 0, 4)
-		if err := gl.CheckError(); err != nil {
+		gl.ActiveTexture(0)
+		img.tex.Bind(gl.Texture2D)
+		c.imgRectProg.GetUniformLocation("tex").Uniform(0)
+		c.imgRectProg.GetUniformLocation("loc").Uniform(x, y)
+		c.imgRectProg.GetUniformLocation("size").Uniform(img.Width, img.Height)
+
+		c.rectVerts.Bind(gl.ArrayBuffer)
+		vattr := c.imgRectProg.GetAttribLocation("vert")
+		vattr.Pointer(4, gl.Byte, false, 0, 0)
+		vattr.Enable()
+		gl.DrawArrays(gl.TriangleStrip, 0, 4)
+		vattr.Disable()
+		if err := gl.GetError(); err != nil {
 			panic(err)
 		}
 	})
+}
+
+func program(vert, frag string) gl.Program {
+	vsh := shader(gl.VertexShader, vert)
+	defer vsh.Delete()
+	fsh := shader(gl.FragmentShader, frag)
+	defer fsh.Delete()
+
+	p := gl.CreateProgram()
+	if p == 0 {
+		panic("Failed to create program")
+	}
+	p.AttachShader(vsh)
+	p.AttachShader(fsh)
+	p.Link()
+	if p.Get(gl.LinkStatus) == 0 {
+		panic("Failed to link program: " + p.GetInfoLog())
+	}
+	return p
+}
+
+func shader(kind gl.ShaderKind, src string) gl.Shader {
+	sh := gl.CreateShader(kind)
+	if sh == 0 {
+		panic("Failed to create shader")
+	}
+	sh.Source(src)
+	sh.Compile()
+	if sh.Get(gl.CompileStatus) == 0 {
+		panic("Failed to compile shader: " + sh.GetInfoLog())
+	}
+	return sh
 }
 
 var (
