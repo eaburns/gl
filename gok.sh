@@ -26,7 +26,7 @@ if [ ! -e $lintignore ]; then
 fi
 t=$(tempfile)
 golint . 2>&1 > $t
-diff $t $lintignore 2>&1 > $o || fail
+diff $lintignore $t 2>&1 > $o || fail
 
 echo Testing
 go test ./... 2>&1 > $o || fail
