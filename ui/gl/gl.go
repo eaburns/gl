@@ -1,3 +1,66 @@
+/*Package gl provides a set of bindings for OpenGL ES.
+
+The intent of this package is to provide a very simple one-to-one set
+of bindings, but with some small modification to be more Go-friendly,
+and to take advantage of some of the niceties available in Go (extra
+type safety, reflection, methods, color.Color, etc.). With very few
+exceptions, each function or method in this package corresponds
+directly to a single OpenGL ES function. The exceptions to this rule
+are noted explicitly in their documentation.
+
+A Note on Naming
+
+Enum names are the same as their corresponding name in C, but they are
+in CamlCase and have the "GL" prefix removed. For example:
+GL_COLOR_BUFFER_BIT is ColorBufferBit. In a very small number of cases
+the names needed an extra prefix to disambiguate constants of
+different types that would otherwise have the same name. For example,
+GL_DELETE_STATUS is both ShaderDeleteStatus or ProgramDeleteStatus.
+One can be used when getting properties from shaders, and the other
+when getting properties from programs. This provides better type
+safety and is not expected to lead to any confusion. Additionally,
+godoc should make it trivial to find the avaliable enum values for
+differenc functions since they are associated with parameters via
+their types.
+
+Function names are the same as their corresponding name in C but with
+the "gl" prefix and all size and type suffixes removed. Functions
+whose C equivalents operate on objects (such as buffers, shaders,
+programs, textures, etc.) have been converted to methods.
+
+Method names are the same as their corresponding function names in C
+but with the "gl" prefix, all size and type suffixes, and the object
+name removed where possible. In cases where these removals results in
+an empty identifier (e.g., glUniform) then the object name is not
+removed. For example:
+	glShaderCompile is Shader.Compile
+	glGetProgram  is Program.Get
+	glEnableVertexAttribArray is VertexAttribArray.Enable()
+	glUniform is Uniform.Uniform
+This should save typing in many places and be, overall, more pleasent.
+
+It should be noted that these rules make for some non-idiomatic names.
+For example, getter methods have a "Get" prefix (Shader.GetInfoLog)
+and setter methods have no prefix (Shader.Source); Go prefers the
+opposite: no prefix for getters, and a "Set" prefix for setters. While
+annoying, this wasn't reconsiled on purpose. This package doesn't
+provide detailed documentation, and the ability to easily go between
+these names iand their C equivalents in order to find the
+documentation is more important than idioms (even if Go's idiom is
+superior ☺).
+
+An apology
+
+I must apologize in advance for the poor godoc comments. The comments
+for functions and methods are straight out of the man pages and are,
+in most cases, completely unhelpful. On the other hand, OpenGL is
+fairly complex, and I am in no way qualified to write useful
+documentation for it. I am also not qualified to write documentation
+geared toward those who have never used OpenGL before, so this
+package's documentation assumes a user who is familiar with OpenGL
+from other sources. I found this tutorial helpful:
+http://www.arcsynthesis.org/gltut.
+*/
 package gl
 
 /*

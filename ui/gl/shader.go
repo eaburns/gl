@@ -71,6 +71,7 @@ func (s Shader) Get(parm ShaderParameter) int {
 }
 
 // GetInfoLog returns the information log for a shader object.
+// This method makes two OpenGL calls: one to get the info log size, and one to get the info log.
 func (s Shader) GetInfoLog() string {
 	sz := s.Get(ShaderInfoLogLength)
 	cstr := (*C.char)(C.malloc(C.size_t(sz + 1)))
@@ -135,6 +136,7 @@ func (p Program) Get(parm ProgramParameter) int {
 }
 
 // GetInfoLog returns the information log for a program object.
+// This method makes two OpenGL calls: one to get the info log size, and one to get the info log.
 func (p Program) GetInfoLog() string {
 	sz := p.Get(ProgramInfoLogLength)
 	cstr := (*C.char)(C.malloc(C.size_t(sz + 1)))
