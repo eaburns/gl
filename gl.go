@@ -1,3 +1,5 @@
+// © 2013 the Gl Authors under the MIT license. See AUTHORS for the list of authors.
+
 /*Package gl provides a set of bindings for OpenGL ES.
 
 The intent of this package is to provide a very simple one-to-one set

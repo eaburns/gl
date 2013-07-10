@@ -1,3 +1,5 @@
+// © 2013 the Gl Authors under the MIT license. See AUTHORS for the list of authors.
+
 package gl
 
 /*
